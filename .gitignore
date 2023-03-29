@@ -1,0 +1,27 @@
+# Logs
+logs
+*.log
+
+# Dependency directories
+node_modules/
+npm-debug.log*
+
+# Build directory
+dist/
+build/
+out/
+public/
+build/
+coverage/
+tmp/
+*.pid
+*.seed
+*.pid.lock
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+node_modules
