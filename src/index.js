@@ -1,7 +1,7 @@
 import "./style.scss";
 import "bootstrap/dist/css/bootstrap.min.css";
 
-//All this code has to be refactored to follow the SOLID principle
+// All this code has to be refactored to follow the SOLID principle
 document.querySelector("#navInbox").addEventListener("click", () => {
   document.querySelector("#navInbox").classList.add("active");
   document.querySelector("#contentInbox").classList.add("active");
@@ -35,113 +35,103 @@ document.querySelector("#navThisWeek").addEventListener("click", () => {
   document.querySelector("#contentThisWeek").classList.add("active");
 });
 
-const tasklist = [];
-
-class Task {
-  constructor(id, task, date) {
-    this.id = id;
-    this.task = task;
-    this.date = date;
-  }
-}
-
-function getWeek(date) {
-  const currentDate = new Date(date);
-  const startDate = new Date(currentDate.getFullYear(), 0, 1);
-  const days = Math.floor((currentDate - startDate) / (24 * 60 * 60 * 1000));
-
-  const weekNumber = Math.ceil(days / 7);
-  return weekNumber;
-}
-
-function removeObjectWithId(arr, id) {
-  const objWithIdIndex = arr.findIndex((obj) => obj.id == id);
-
-  if (objWithIdIndex > -1) {
-    arr.splice(objWithIdIndex, 1);
+(function () {
+  class Task {
+    constructor(id, task, date) {
+      this.id = id;
+      this.task = task;
+      this.date = date;
+    }
   }
 
-  return arr;
-}
-
-// add the functionality to the add button to add elements
-document.querySelector("#addTask").addEventListener("click", () => {
-  const taskInput = document.querySelector("#inputTask").value;
-  const id = Date.now();
-
-  const taskHTML = () =>
-    `
-    <div class="col-12 taskContainer d-flex" id="${id}">
-    <a class="col-5 btn btn-sm">${taskInput}</a>
-    <input type="date" class="col-2 text-center date"/>
+  const task = {
+    tasklist: [],
+    taskHTML: (id, task, date) =>
+      `<div class="col-12 taskContainer d-flex" id="${id}">
+    <a class="col-5 btn btn-sm">${task}</a>
+    <input type="date" value=${date} class="col-2 text-center date"/>
     <button class="btn btn-sm deleteTask">❌</button>
-    </div>
-    `;
+    </div>`,
 
-  const task = new Task(id, taskInput, "");
-  tasklist.push(task);
-  document.querySelector("#inputTask").value = "";
+    removeObjectWithId: function (arr, id) {
+      const objWithIdIndex = arr.findIndex((obj) => obj.id == id);
 
-  document.querySelector("#tasks").insertAdjacentHTML("afterbegin", taskHTML());
-});
+      if (objWithIdIndex > -1) {
+        arr.splice(objWithIdIndex, 1);
+      }
 
-document.querySelector("#tasks").addEventListener("click", (event) => {
-  if (event.target.classList.contains("deleteTask")) {
-    removeObjectWithId(tasklist, event.target.parentElement.id);
+      return arr;
+    },
 
-    console.log(tasklist);
-    event.target.parentElement.remove();
-  }
-});
+    formatDay: function (dateStr) {
+      const [year, day, month] = dateStr.split("-");
+      const formattedDay = day.padStart(2, "0");
+      const formattedMonth = month.padStart(2, "0");
+      return `${year}-${formattedMonth}-${formattedDay}`;
+    },
 
-document.querySelector("#tasks").addEventListener("change", (event) => {
-  if (event.target.classList.contains("date")) {
-    const id = event.target.parentElement.id;
-    const objIndex = tasklist.findIndex((obj) => obj.id == id);
-    tasklist[objIndex].date = event.target.value;
-    console.log(getWeek(event.target.value));
-    console.log(tasklist);
-  }
-});
+    resetDOM: function () {
+      this.$taskList.innerHTML = "";
+    },
 
-document.querySelector("#navToday").addEventListener("click", () => {
-  document.querySelector("#weeklyTasks").innerHTML = "";
-  const currentWeek = getWeek(new Date());
-  const weeklyTasks = tasklist.filter(
-    (task) => getWeek(task.date) == currentWeek
-  );
+    init: function () {
+      this.cacheDom();
+      this.bindEvents();
+      this.render();
+    },
 
-  weeklyTasks.map((task) => {
-    const weeklytaskHTML = () =>
-      `
-    <div class="col-12 taskContainer d-flex" id="${task.id}">
-    <a class="col-5 btn">${task.task}</a>
-    <p>${task.date}</p>
-    </div>
-    `;
-    document
-      .querySelector("#weeklyTasks")
-      .insertAdjacentHTML("afterbegin", weeklytaskHTML());
-  });
-});
+    cacheDom: function () {
+      this.$rightPan = document.querySelector("#right-pan");
+      this.$addButton = this.$rightPan.querySelector("#addTask");
+      this.$input = this.$rightPan.querySelector("#inputTask");
+      this.$taskList = this.$rightPan.querySelector("#tasks");
+    },
 
-document.querySelector("#navToday").addEventListener("click", () => {
-  document.querySelector("#nextWeeklyTasks").innerHTML = "";
-  const nextWeek = getWeek(new Date()) + 1;
-  const nextWeeklyTasks = tasklist.filter(
-    (task) => getWeek(task.date) == nextWeek
-  );
+    bindEvents: function () {
+      this.$addButton.addEventListener("click", this.addTask.bind(this));
+      this.$taskList.addEventListener("click", this.deleteTask.bind(this));
+      this.$taskList.addEventListener("change", this.editDate.bind(this));
+    },
 
-  nextWeeklyTasks.map((task) => {
-    const nextWeeklytaskHTML = () =>
-      `
-    <div class="col-12 taskContainer d-flex" id="${task.id}">
-    <a class="col-5 btn">${task.task}</a>
-    <p>${task.date}</p>
-    </div>
-    `;
-    document
-      .querySelector("#nextWeeklyTasks")
-      .insertAdjacentHTML("afterbegin", nextWeeklytaskHTML());
-  });
-});
+    render: function () {
+      const data = {
+        tasklist: this.tasklist,
+      };
+
+      this.resetDOM();
+
+      data.tasklist.map((task) => {
+        this.$taskList.insertAdjacentHTML(
+          "afterbegin",
+          this.taskHTML(task.id, task.task, this.formatDay(task.date))
+        );
+      });
+    },
+
+    addTask: function () {
+      const id = Date.now();
+      const task = new Task(id, this.$input.value, "2022-01-01");
+      this.tasklist.push(task);
+      this.render();
+      this.$input.value = "";
+    },
+
+    deleteTask: function (event) {
+      if (event.target.classList.contains("deleteTask")) {
+        this.removeObjectWithId(this.tasklist, event.target.parentElement.id);
+        this.render();
+      }
+    },
+
+    editDate: function (event) {
+      if (event.target.classList.contains("date")) {
+        const id = event.target.parentElement.id;
+        const objIndex = this.tasklist.findIndex((obj) => obj.id == id);
+        this.tasklist[objIndex].date = this.formatDay(event.target.value);
+
+        console.log(this.tasklist);
+      }
+    },
+  };
+  task.init();
+})();
