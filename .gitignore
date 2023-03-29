@@ -10,8 +10,6 @@ npm-debug.log*
 dist/
 build/
 out/
-public/
-build/
 coverage/
 tmp/
 *.pid
