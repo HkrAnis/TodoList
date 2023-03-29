@@ -35,7 +35,7 @@ document.querySelector("#navThisWeek").addEventListener("click", () => {
   document.querySelector("#contentThisWeek").classList.add("active");
 });
 
-(function () {
+const task = (function () {
   class Task {
     constructor(id, task, date) {
       this.id = id;
@@ -44,94 +44,84 @@ document.querySelector("#navThisWeek").addEventListener("click", () => {
     }
   }
 
-  const task = {
-    tasklist: [],
-    taskHTML: (id, task, date) =>
-      `<div class="col-12 taskContainer d-flex" id="${id}">
+  const tasklist = [];
+  const taskHTML = (id, task, date) =>
+    `<div class="col-12 taskContainer d-flex" id="${id}">
     <a class="col-5 btn btn-sm">${task}</a>
     <input type="date" value=${date} class="col-2 text-center date"/>
     <button class="btn btn-sm deleteTask">❌</button>
-    </div>`,
+    </div>`;
 
-    removeObjectWithId: function (arr, id) {
-      const objWithIdIndex = arr.findIndex((obj) => obj.id == id);
-
-      if (objWithIdIndex > -1) {
-        arr.splice(objWithIdIndex, 1);
-      }
-
-      return arr;
-    },
-
-    formatDay: function (dateStr) {
-      const [year, day, month] = dateStr.split("-");
-      const formattedDay = day.padStart(2, "0");
-      const formattedMonth = month.padStart(2, "0");
-      return `${year}-${formattedMonth}-${formattedDay}`;
-    },
-
-    resetDOM: function () {
-      this.$taskList.innerHTML = "";
-    },
-
-    init: function () {
-      this.cacheDom();
-      this.bindEvents();
-      this.render();
-    },
-
-    cacheDom: function () {
-      this.$rightPan = document.querySelector("#right-pan");
-      this.$addButton = this.$rightPan.querySelector("#addTask");
-      this.$input = this.$rightPan.querySelector("#inputTask");
-      this.$taskList = this.$rightPan.querySelector("#tasks");
-    },
-
-    bindEvents: function () {
-      this.$addButton.addEventListener("click", this.addTask.bind(this));
-      this.$taskList.addEventListener("click", this.deleteTask.bind(this));
-      this.$taskList.addEventListener("change", this.editDate.bind(this));
-    },
-
-    render: function () {
-      const data = {
-        tasklist: this.tasklist,
-      };
-
-      this.resetDOM();
-
-      data.tasklist.map((task) => {
-        this.$taskList.insertAdjacentHTML(
-          "afterbegin",
-          this.taskHTML(task.id, task.task, this.formatDay(task.date))
-        );
-      });
-    },
-
-    addTask: function () {
-      const id = Date.now();
-      const task = new Task(id, this.$input.value, "2022-01-01");
-      this.tasklist.push(task);
-      this.render();
-      this.$input.value = "";
-    },
-
-    deleteTask: function (event) {
-      if (event.target.classList.contains("deleteTask")) {
-        this.removeObjectWithId(this.tasklist, event.target.parentElement.id);
-        this.render();
-      }
-    },
-
-    editDate: function (event) {
-      if (event.target.classList.contains("date")) {
-        const id = event.target.parentElement.id;
-        const objIndex = this.tasklist.findIndex((obj) => obj.id == id);
-        this.tasklist[objIndex].date = this.formatDay(event.target.value);
-
-        console.log(this.tasklist);
-      }
-    },
+  const removeObjectWithId = (arr, id) => {
+    const objWithIdIndex = arr.findIndex((obj) => obj.id == id);
+    if (objWithIdIndex > -1) {
+      arr.splice(objWithIdIndex, 1);
+    }
+    return arr;
   };
-  task.init();
+
+  const formatDay = (dateStr) => {
+    const [year, day, month] = dateStr.split("-");
+    const formattedDay = day.padStart(2, "0");
+    const formattedMonth = month.padStart(2, "0");
+    return `${year}-${formattedMonth}-${formattedDay}`;
+  };
+
+  const resetDOM = () => {
+    $taskList.innerHTML = "";
+  };
+
+  // casheDOM
+  const $rightPan = document.querySelector("#right-pan");
+  const $addButton = $rightPan.querySelector("#addTask");
+  const $input = $rightPan.querySelector("#inputTask");
+  const $taskList = $rightPan.querySelector("#tasks");
+
+  // bindEvents
+  $addButton.addEventListener("click", addTask);
+  $taskList.addEventListener("click", deleteTask);
+  $taskList.addEventListener("change", editDate);
+
+  render();
+
+  function render() {
+    const data = {
+      tasklist: tasklist,
+    };
+
+    resetDOM();
+
+    data.tasklist.map((task) => {
+      $taskList.insertAdjacentHTML(
+        "afterbegin",
+        taskHTML(task.id, task.task, formatDay(task.date))
+      );
+    });
+  }
+
+  function addTask() {
+    const id = Date.now();
+    const task = new Task(id, $input.value, "2022-01-01");
+    tasklist.push(task);
+    render();
+    $input.value = "";
+  }
+
+  function deleteTask(event) {
+    if (event.target.classList.contains("deleteTask")) {
+      removeObjectWithId(tasklist, event.target.parentElement.id);
+      render();
+    }
+  }
+
+  function editDate(event) {
+    if (event.target.classList.contains("date")) {
+      const id = event.target.parentElement.id;
+      const objIndex = tasklist.findIndex((obj) => obj.id == id);
+      tasklist[objIndex].date = formatDay(event.target.value);
+    }
+  }
+  return {
+    tasklist: tasklist,
+  };
 })();
